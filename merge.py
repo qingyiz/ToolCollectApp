@@ -511,7 +511,7 @@ class ExcelMergerApp(QMainWindow):
         self.log_update_signal.emit(msg)
 
     def copy_selected(self):
-        """复制选中的单元格、行或列"""
+        """复制选中的单元格、行或列（复制整列时不包含列名）"""
         selected_items = self.table_preview.selectedItems()
         if not selected_items:
             msg = "提示：请先选中要复制的内容"
@@ -524,6 +524,7 @@ class ExcelMergerApp(QMainWindow):
         min_col = float('inf')
         max_col = -float('inf')
 
+        # 1. 收集选中数据的行列范围
         for item in selected_items:
             row = item.row()
             col = item.column()
@@ -536,21 +537,22 @@ class ExcelMergerApp(QMainWindow):
             min_col = min(min_col, col)
             max_col = max(max_col, col)
 
-        headers = []
-        for col in range(min_col, max_col + 1):
-            header_item = self.table_preview.horizontalHeaderItem(col)
-            headers.append(header_item.text() if header_item else f"列{col + 1}")
-
-        copy_text = '\t'.join(headers) + '\n'
+        # 2. 构建复制文本（仅保留数据行，跳过列名）
+        copy_text = ""
+        # 遍历行范围（从 min_row 到 max_row，不包含表头行逻辑）
         for row in range(min_row, max_row + 1):
             row_data = []
             for col in range(min_col, max_col + 1):
+                # 获取当前单元格数据，无数据则填空字符串
                 row_data.append(data.get(row, {}).get(col, ""))
+            # 拼接当前行数据，用制表符分隔
             copy_text += '\t'.join(row_data) + '\n'
 
+        # 3. 复制到剪贴板
         clipboard = QtWidgets.QApplication.clipboard()
         clipboard.setText(copy_text.strip())
 
+        # 4. 日志反馈
         selected_rows = max_row - min_row + 1
         selected_cols = max_col - min_col + 1
         msg = f"✅ 已复制选中区域（{selected_rows} 行 × {selected_cols} 列）"
