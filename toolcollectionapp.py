@@ -452,6 +452,22 @@ class ToolCollectionApp(QMainWindow):
         self.merge_execl.show()
         self.statusBar().showMessage("已启动：Excel合并工具")
 
+    def closeEvent(self, event):
+        windows = []
+        if hasattr(self, "inventory_window"):
+            windows.append(self.inventory_window)
+        if hasattr(self, "excel_window"):
+            windows.append(self.excel_window)
+        if hasattr(self, "merge_execl"):
+            windows.append(self.merge_execl)
+        for w in windows:
+            try:
+                if w is not None:
+                    w.close()
+            except Exception:
+                pass
+        event.accept()
+
     # 新增工具启动函数示例
     # def launch_new_tool(self):
     #     from new_tool import NewToolClass
